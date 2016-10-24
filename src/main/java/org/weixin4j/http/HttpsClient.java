@@ -20,6 +20,9 @@
 package org.weixin4j.http;
 
 import java.io.BufferedInputStream;
+
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.weixin4j.Configuration;
 import org.weixin4j.WeixinException;
 import java.io.BufferedReader;
@@ -44,7 +47,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
-import net.sf.json.JSONObject;
 
 /**
  * 请求微信平台及响应的客户端类
@@ -56,6 +58,7 @@ import net.sf.json.JSONObject;
  *
  * @author weixin4j<weixin4j@ansitech.com>
  */
+@Slf4j
 public class HttpsClient implements java.io.Serializable {
 
     private static final int OK = 200;  // OK: Success!
@@ -81,9 +84,7 @@ public class HttpsClient implements java.io.Serializable {
     public Response post(String url, JSONObject json) throws WeixinException {
         //将JSON数据转换为String字符串
         String jsonString = json == null ? null : json.toString();
-        if (Configuration.isDebug()) {
-            System.out.println("URL POST 数据：" + jsonString);
-        }
+        log.debug("URL POST 数据:{}", jsonString);
         //提交数据
         return httpsRequest(url, _POST, jsonString, false, null, null, null);
     }

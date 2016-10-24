@@ -19,14 +19,14 @@
  */
 package org.weixin4j;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.weixin4j.menu.ButtonType;
 import org.weixin4j.menu.ClickButton;
 import org.weixin4j.menu.SingleButton;
 import org.weixin4j.menu.ViewButton;
 import java.util.ArrayList;
 import java.util.List;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.weixin4j.menu.LocationSelectButton;
 import org.weixin4j.menu.MediaIdButton;
 import org.weixin4j.menu.PicPhotoOrAlbumButton;

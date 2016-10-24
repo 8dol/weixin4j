@@ -42,6 +42,8 @@ public class User {
     private long subscribe_time;    //用户关注时间，为时间戳。如果用户曾多次关注，则取最后关注时间
     private String remark;          //用户备注
     private String groupid;         //用户分组
+    private String unionid;
+
 
     /**
      * 获取 用户的标识
@@ -286,5 +288,34 @@ public class User {
 
     public void setGroupid(String groupid) {
         this.groupid = groupid;
+    }
+
+
+    public String getUnionid() {
+        return unionid;
+    }
+
+    public void setUnionid(String unionid) {
+        this.unionid = unionid;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("User{");
+        sb.append("openid='").append(openid).append('\'');
+        sb.append(", subscribe='").append(subscribe).append('\'');
+        sb.append(", nickname='").append(nickname).append('\'');
+        sb.append(", sex=").append(sex);
+        sb.append(", city='").append(city).append('\'');
+        sb.append(", country='").append(country).append('\'');
+        sb.append(", province='").append(province).append('\'');
+        sb.append(", language='").append(language).append('\'');
+        sb.append(", headimgurl='").append(headimgurl).append('\'');
+        sb.append(", subscribe_time=").append(subscribe_time);
+        sb.append(", remark='").append(remark).append('\'');
+        sb.append(", groupid='").append(groupid).append('\'');
+        sb.append(", unionid='").append(unionid).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

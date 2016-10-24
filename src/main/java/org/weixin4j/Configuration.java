@@ -19,21 +19,20 @@
  */
 package org.weixin4j;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import lombok.extern.slf4j.Slf4j;
+
 import java.security.AccessControlException;
 import java.util.Properties;
 
 /**
  * 微信平台调用基础配置
- *
+ * <p>
  * <p>
  * 如果存在weixin4j.properties,则加载属性文件中配置的参数</p>
  *
  * @author weixin4j<weixin4j@ansitech.com>
  */
+@Slf4j
 public class Configuration {
 
     private static Properties defaultProperty;
@@ -45,60 +44,22 @@ public class Configuration {
     static void init() {
         //初始化默认配置
         defaultProperty = new Properties();
-        defaultProperty.setProperty("weixin4j.debug", "true");
         defaultProperty.setProperty("weixin4j.token", "weixin4j");
         defaultProperty.setProperty("weixin4j.http.connectionTimeout", "20000");
         defaultProperty.setProperty("weixin4j.http.readTimeout", "120000");
         defaultProperty.setProperty("weixin4j.http.retryCount", "3");
-        //读取自定义配置
-        String t4jProps = "weixin4j.properties";
-        boolean loaded = loadProperties(defaultProperty, "." + File.separatorChar + t4jProps)
-                || loadProperties(defaultProperty, Configuration.class.getResourceAsStream("/WEB-INF/" + t4jProps))
-                || loadProperties(defaultProperty, Configuration.class.getClassLoader().getResourceAsStream(t4jProps));
-        if (!loaded) {
-            System.out.println("weixin4j:没有加载到weixin4j.properties属性文件!");
-        }
     }
 
     /**
-     * 加载属性文件
+     * 设置属性
      *
-     * @param props 属性文件实例
-     * @param path 属性文件路径
+     * @param name  属性名
+     * @param value 属性值
      * @return 是否加载成功
      */
-    private static boolean loadProperties(Properties props, String path) {
-        try {
-            File file = new File(path);
-            if (file.exists() && file.isFile()) {
-                props.load(new FileInputStream(file));
-                return true;
-            }
-        } catch (IOException ignore) {
-            //异常忽略
-            ignore.printStackTrace();
-        }
-        return false;
-    }
-
-    /**
-     * 加载属性文件
-     *
-     * @param props 属性文件实例
-     * @param is 属性文件流
-     * @return 是否加载成功
-     */
-    private static boolean loadProperties(Properties props, InputStream is) {
-        try {
-            if (is != null) {
-                props.load(is);
-                return true;
-            }
-        } catch (IOException ignore) {
-            //异常忽略
-            ignore.printStackTrace();
-        }
-        return false;
+    public static void setProperty(String name, String value) {
+        log.info("[Weixin4j]加载微信配置:{}->{}", name, value);
+        defaultProperty.setProperty(name, value);
     }
 
     /**
@@ -177,14 +138,6 @@ public class Configuration {
         return getIntProperty("weixin4j.http.readTimeout", readTimeout);
     }
 
-    /**
-     * 获取 是否为调试模式
-     *
-     * @return 是否为调试模式
-     */
-    public static boolean isDebug() {
-        return getBoolean("weixin4j.debug");
-    }
 
     public static boolean getBoolean(String name) {
         String value = getProperty(name);
@@ -222,7 +175,7 @@ public class Configuration {
     /**
      * 获取属性值
      *
-     * @param name 属性名
+     * @param name          属性名
      * @param fallbackValue 默认返回值
      * @return 属性值
      */

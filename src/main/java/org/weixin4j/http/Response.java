@@ -19,20 +19,22 @@
  */
 package org.weixin4j.http;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.weixin4j.WeixinException;
+
+import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import javax.net.ssl.HttpsURLConnection;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 /**
  * <p>
  * Title: https的输出流</p>
- *
+ * <p>
  * <p>
  * Description: </p>
  *
@@ -127,7 +129,7 @@ public class Response {
      * @throws org.weixin4j.WeixinException
      */
     public JSONObject asJSONObject() throws WeixinException {
-        return JSONObject.fromObject(asString());
+        return JSON.parseObject(asString());
     }
 
     /**
@@ -137,7 +139,7 @@ public class Response {
      * @throws org.weixin4j.WeixinException
      */
     public JSONArray asJSONArray() throws WeixinException {
-        return JSONArray.fromObject(asString());
+        return JSON.parseArray(asString());
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.weixin4j.spi;
 
+import lombok.extern.slf4j.Slf4j;
 import org.weixin4j.message.InputMessage;
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,6 +21,7 @@ import org.weixin4j.util.XStreamFactory;
  * @author qsyang
  * @version 1.0
  */
+@Slf4j
 public class DefaultMessageHandler implements IMessageHandler {
 
     @Override
@@ -27,11 +29,7 @@ public class DefaultMessageHandler implements IMessageHandler {
         try {
             //将输入流转换为字符串
             String xmlMsg = XStreamFactory.inputStream2String(inputStream);
-            if (Configuration.isDebug()) {
-                System.out.println("获取POST的消息:");
-                System.out.println(xmlMsg);
-                System.out.println("------------------------");
-            }
+            log.debug("获取POST的消息:\n{}\n------------------------", xmlMsg);
             return this.invoke(xmlMsg);
         } catch (IOException ex) {
             throw new WeixinException("输入流转换错误：", ex);
@@ -46,14 +44,10 @@ public class DefaultMessageHandler implements IMessageHandler {
             JAXBContext context = JAXBContext.newInstance(InputMessage.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
             InputMessage inputMsg = (InputMessage) unmarshaller.unmarshal(new StringReader(inputXml));
-            if (Configuration.isDebug()) {
-                System.out.println("将指定节点下的xml节点数据转换为对象成功!");
-            }
+            log.debug("将指定节点下的xml节点数据转换为对象成功!");
             // 取得消息类型
             String msgType = inputMsg.getMsgType();
-            if (Configuration.isDebug()) {
-                System.out.println("POST的消息类型:[" + msgType + "]");
-            }
+            log.debug("POST的消息类型:[{}]", msgType);
             //获取普通消息处理工具类
             INormalMessageHandler normalMsgHandler = HandlerFactory.getNormalMessageHandler();
             if (msgType.equals(MsgType.Text.toString())) {
@@ -146,11 +140,7 @@ public class DefaultMessageHandler implements IMessageHandler {
             try {
                 // 把发送发送对象转换为xml输出
                 String xml = outputMsg.toXML();
-                if (Configuration.isDebug()) {
-                    System.out.println("POST输出消息:");
-                    System.out.println(xml);
-                    System.out.println("------------------------");
-                }
+                log.debug("POST输出消息:\n{}\n------------------------", xml);
                 return xml;
             } catch (Exception ex) {
                 throw new WeixinException("转换回复消息为xml时错误：", ex);

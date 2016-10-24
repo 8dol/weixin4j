@@ -19,9 +19,10 @@
  */
 package org.weixin4j.http;
 
+import com.alibaba.fastjson.JSONObject;
 import org.weixin4j.WeixinException;
+
 import java.util.Date;
-import net.sf.json.JSONObject;
 
 /**
  * 网页授权对象
@@ -33,7 +34,7 @@ public class OAuth2Token {
 
     private String access_token;
     private int expires_in = 7200;
-   private String refresh_token;
+    private String refresh_token;
     private long exprexpiredTime;
     private String openid;
     private String scope;
@@ -48,7 +49,7 @@ public class OAuth2Token {
 
     /**
      * 通过输出对象，从输出对象转换为JSON对象，后获取JSON数据包
-     *
+     * <p>
      * <p>
      * 要求输出内容为一个标准的JSON数据包，正常情况下， 微信会返回下述JSON数据包给公众号：
      * {"access_token":"ACCESS_TOKEN","expires_in":7200}</p>
@@ -62,7 +63,7 @@ public class OAuth2Token {
 
     /**
      * 通过微信公众平台返回JSON对象创建凭证对象
-     *
+     * <p>
      * <p>
      * 正常情况下，微信会返回下述JSON数据包给公众号：
      * {"access_token":"ACCESS_TOKEN","expires_in":7200}</p>
@@ -73,7 +74,7 @@ public class OAuth2Token {
     public OAuth2Token(JSONObject jsonObj) throws WeixinException {
         this.access_token = jsonObj.getString("access_token");
         //根据当前时间的毫秒数+获取的秒数计算过期时间
-        int expiresIn = jsonObj.getInt("expires_in");
+        int expiresIn = jsonObj.getIntValue("expires_in");
         setExpires_in(expiresIn);
     }
 

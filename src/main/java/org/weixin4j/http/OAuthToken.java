@@ -19,14 +19,15 @@
  */
 package org.weixin4j.http;
 
+import com.alibaba.fastjson.JSONObject;
 import org.weixin4j.WeixinException;
+
 import java.io.Serializable;
 import java.util.Date;
-import net.sf.json.JSONObject;
 
 /**
  * 微信平台用户凭证对象
- *
+ * <p>
  * <p>
  * 通过<tt>Weixin</tt>产生一个请求对象，对应生成一个<tt>HttpClient</tt>，
  * 每次登陆产生一个<tt>OAuth</tt>用户连接,使用<tt>OAuthToken</tt>
@@ -56,7 +57,7 @@ public final class OAuthToken implements Serializable {
 
     /**
      * 通过输出对象，从输出对象转换为JSON对象，后获取JSON数据包
-     *
+     * <p>
      * <p>
      * 要求输出内容为一个标准的JSON数据包，正常情况下， 微信会返回下述JSON数据包给公众号：
      * {"access_token":"ACCESS_TOKEN","expires_in":7200}</p>
@@ -70,7 +71,7 @@ public final class OAuthToken implements Serializable {
 
     /**
      * 通过微信公众平台返回JSON对象创建凭证对象
-     *
+     * <p>
      * <p>
      * 正常情况下，微信会返回下述JSON数据包给公众号：
      * {"access_token":"ACCESS_TOKEN","expires_in":7200}</p>
@@ -81,7 +82,7 @@ public final class OAuthToken implements Serializable {
     public OAuthToken(JSONObject jsonObj) throws WeixinException {
         this.access_token = jsonObj.getString("access_token");
         //根据当前时间的毫秒数+获取的秒数计算过期时间
-        int expiresIn = jsonObj.getInt("expires_in");
+        int expiresIn = jsonObj.getIntValue("expires_in");
         if (jsonObj.containsKey("create_time")) {
             //获取创建时间
             long createTime = jsonObj.getLong("create_time");
@@ -134,7 +135,7 @@ public final class OAuthToken implements Serializable {
 
     /**
      * 设置 凭证有效时间，单位：秒
-     *
+     * <p>
      * <p>
      * 为了与微信服务器保存同步，误差设置为提前1分钟，即：将创建时间提早1分钟
      * </p>
@@ -153,7 +154,7 @@ public final class OAuthToken implements Serializable {
 
     /**
      * 设置 凭证有效时间，单位：秒
-     *
+     * <p>
      * <p>
      * 为了与微信服务器保存同步，误差设置为提前1分钟，即：将创建时间提早1分钟
      * </p>

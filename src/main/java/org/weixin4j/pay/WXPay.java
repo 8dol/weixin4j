@@ -2,6 +2,8 @@ package org.weixin4j.pay;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.weixin4j.Configuration;
 import org.weixin4j.util.MapUtil;
@@ -12,6 +14,7 @@ import org.weixin4j.util.MapUtil;
  * @author qsyang
  * @version 1.0
  */
+@Slf4j
 public class WXPay {
 
     private final String appId;             //公众号Id
@@ -116,14 +119,10 @@ public class WXPay {
         String stringSignTemp = string1 + "&key=" + paternerKey;
         //2.2 MD5加密
         String sign = DigestUtils.md5Hex(stringSignTemp).toUpperCase();
-        if (Configuration.isDebug()) {
-            System.out.println("sign = " + sign);
-        }
+        log.debug("sign={}", sign);
         //3 对传入参数中所有键值对的value进行urlencode转码
         String string2 = MapUtil.mapJoin(sortParams, true);
-        if (Configuration.isDebug()) {
-            System.out.println("string2 = " + string2);
-        }
+        log.debug("string2={}", string2);
         //4 将sign=signValue拼接到string2后面得到最终的package字符串。
         return string2 + "&sign=" + sign;
     }

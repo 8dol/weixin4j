@@ -19,12 +19,16 @@
  */
 package org.weixin4j;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.weixin4j.http.OAuth;
 import org.weixin4j.http.OAuthToken;
 import org.weixin4j.http.Response;
 import org.weixin4j.message.Article;
 import org.weixin4j.message.Articles;
 import org.weixin4j.ticket.TicketType;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,14 +42,11 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+
 import org.apache.commons.lang.StringUtils;
 import org.weixin4j.http.Attachment;
 import org.weixin4j.http.HttpClient;
@@ -62,6 +63,7 @@ import org.weixin4j.pay.redpack.SendRedPackResult;
  *
  * @author weixin4j<weixin4j@ansitech.com>
  */
+@Slf4j
 public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
@@ -79,7 +81,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 微信基础支持
-     *
+     * <p>
      * 默认Access_Token过期后会自动重新登录
      */
     public Weixin() {
@@ -105,15 +107,15 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 初始化OAuthToken和OAuth对象
-     *
+     * <p>
      * <p>
      * 此方法，一般是在数据库中已经有一个未过期的accessToken时调用
      * </p>
      *
      * @param accessToken 获取到的凭证
-     * @param appId 开发者Id
-     * @param secret 开发者密钥
-     * @param expiresIn 计算过后的剩余时间
+     * @param appId       开发者Id
+     * @param secret      开发者密钥
+     * @param expiresIn   计算过后的剩余时间
      * @throws WeixinException
      * @since Weixin 1.0.0
      */
@@ -128,16 +130,16 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 初始化OAuthToken和OAuth对象
-     *
+     * <p>
      * <p>
      * 此方法，一般是在数据库中已经有一个未过期的accessToken时调用
      * </p>
      *
      * @param accessToken 获取到的凭证
-     * @param appId 开发者Id
-     * @param secret 开发者密钥
-     * @param expiresIn 凭证有效时间，单位：秒
-     * @param createTime 凭证创建时间
+     * @param appId       开发者Id
+     * @param secret      开发者密钥
+     * @param expiresIn   凭证有效时间，单位：秒
+     * @param createTime  凭证创建时间
      * @throws WeixinException
      * @since Weixin 1.0.0
      */
@@ -155,7 +157,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 获取access_token
      *
-     * @param appId 第三方用户唯一凭证
+     * @param appId  第三方用户唯一凭证
      * @param secret 第三方用户唯一凭证密钥，既appsecret
      * @return 用户凭证
      * @throws WeixinException
@@ -168,8 +170,8 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 向微信平台发送获取access_token请求
      *
-     * @param appId 第三方用户唯一凭证
-     * @param secret 第三方用户唯一凭证密钥，既appsecret
+     * @param appId     第三方用户唯一凭证
+     * @param secret    第三方用户唯一凭证密钥，既appsecret
      * @param grantType 获取access_token填写client_credential
      * @return 用户凭证
      * @throws WeixinException
@@ -200,9 +202,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("login返回json：" + jsonObj.toString());
-            }
+            log.debug("login返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
@@ -215,7 +215,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
                 //设置公众号信息
                 oauth = new OAuth(appId, secret);
                 //设置凭证
-                this.oauthToken = (OAuthToken) JSONObject.toBean(jsonObj, OAuthToken.class);
+                this.oauthToken = JSONObject.toJavaObject(jsonObj, OAuthToken.class);
             }
         }
         return oauthToken;
@@ -223,7 +223,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 验证用户登录
-     *
+     * <p>
      * <p>
      * 调用所有方法之前，应先调用此方法检查用户是否已经登录，或者Token是否失效<br/>
      * 如果没有登录，则跑出异常提示登录，如果失效，密码正确的情况下回自动重新登录。</p>
@@ -237,7 +237,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
             if (oauthToken == null) {
                 throw new WeixinException("oauthToken is null,you must call login or init first!");
             } else //已过期
-             if (oauthToken.isExprexpired()) {
+                if (oauthToken.isExprexpired()) {
                     //如果用户名和密码正确，则自动登录，否则返回异常
                     if (oauth != null) {
                         //自动重新发送登录请求
@@ -251,7 +251,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 根据OpenId获取用户对象
-     *
+     * <p>
      * <p>
      * 通过公众号，返回用户对象，进行用户相关操作</p>
      *
@@ -266,12 +266,12 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 获取用户对象
-     *
+     * <p>
      * <p>
      * 通过公众号，返回用户对象，进行用户相关操作</p>
      *
      * @param openId 普通用户的标识，对当前公众号唯一
-     * @param lang 国家地区语言版本 zh_CN 简体，zh_TW 繁体，en 英语
+     * @param lang   国家地区语言版本 zh_CN 简体，zh_TW 繁体，en 英语
      * @return 用户对象
      * @throws WeixinException
      */
@@ -287,23 +287,21 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("getUserInfo返回json：" + jsonObj.toString());
-            }
+            log.debug("getUserInfo返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             }
             //设置公众号信息
-            return (User) JSONObject.toBean(jsonObj, User.class);
+            return JSONObject.toJavaObject(jsonObj, User.class);
         }
         return null;
     }
 
     /**
      * 获取所有关注者列表
-     *
+     * <p>
      * <p>
      * 通过公众号，返回用户对象，进行用户相关操作</p>
      *
@@ -334,14 +332,14 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 获取关注者列表
-     *
+     * <p>
      * <p>
      * 通过公众号，返回用户对象，进行用户相关操作</p>
      *
      * @param next_openid 第一个拉取的OPENID，不填默认从头开始拉取
      * @return 关注者对象
      * @throws WeixinException when Weixin service or network is unavailable, or
-     * the user has not authorized
+     *                         the user has not authorized
      */
     public Followers getUserList(String next_openid) throws WeixinException {
         //拼接参数
@@ -358,17 +356,14 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         JSONObject jsonObj = res.asJSONObject();
         Followers follower = null;
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("getUserList返回json：" + jsonObj.toString());
-            }
+            log.debug("getUserList返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             }
-            Map<String, Class> map = new HashMap<String, Class>();
-            map.put("data", Data.class);
-            follower = (Followers) JSONObject.toBean(jsonObj, Followers.class, map);
+            follower = JSONObject.toJavaObject(jsonObj, Followers.class);
+            follower.setData(new Data());
         }
         return follower;
     }
@@ -400,23 +395,21 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         JSONObject jsonObj = res.asJSONObject();
         Group group = null;
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("createGroup返回json：" + jsonObj.toString());
-            }
+            log.debug("createGroup返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             }
             JSONObject jsonGroup = jsonObj.getJSONObject("group");
-            group = (Group) JSONObject.toBean(jsonGroup, Group.class);
+            group = JSONObject.toJavaObject(jsonGroup, Group.class);
         }
         return group;
     }
 
     /**
      * 查询所有分组
-     *
+     * <p>
      * <p>
      * 最多支持创建500个分组</p>
      *
@@ -434,9 +427,8 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("getGroups返回json：" + jsonObj.toString());
-            }
+            log.debug("getGroups返回json:{}", jsonObj);
+
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
@@ -446,7 +438,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
             JSONArray groups = jsonObj.getJSONArray("groups");
             for (int i = 0; i < groups.size(); i++) {
                 JSONObject jsonGroup = groups.getJSONObject(i);
-                Group group = (Group) JSONObject.toBean(jsonGroup, Group.class);
+                Group group = JSONObject.toJavaObject(jsonGroup, Group.class);
                 groupList.add(group);
             }
         }
@@ -455,7 +447,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 查询用户所在分组
-     *
+     * <p>
      * <p>
      * 通过用户的OpenID查询其所在的GroupID</p>
      *
@@ -481,16 +473,14 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("getGroupId返回json：" + jsonObj.toString());
-            }
+            log.debug("getGroupId返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             }
             //获取成功返回分组Id
-            groupId = jsonObj.getInt("groupid");
+            groupId = jsonObj.getIntValue("groupid");
         }
         return groupId;
     }
@@ -498,7 +488,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 修改分组名
      *
-     * @param id 分组id，由微信分配
+     * @param id   分组id，由微信分配
      * @param name 分组名字（30个字符以内）
      * @throws WeixinException 修改分组名异常
      */
@@ -525,13 +515,11 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("updateGroup返回json：" + jsonObj.toString());
-            }
+            log.debug("updateGroup返回json:{}", jsonObj);
             //判断是否修改成功
             //正常时返回 {"errcode": 0, "errmsg": "ok"}
             //错误时返回 示例：{"errcode":40013,"errmsg":"invalid appid"}
-            int errcode = jsonObj.getInt("errcode");
+            int errcode = jsonObj.getIntValue("errcode");
             //登录成功，设置accessToken和过期时间
             if (errcode != 0) {
                 //返回异常信息
@@ -561,9 +549,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("deleteGroup返回json：" + jsonObj.toString());
-            }
+            log.debug("deleteGroup返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -575,7 +561,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 移动用户分组
      *
-     * @param openid 用户唯一标识符
+     * @param openid     用户唯一标识符
      * @param to_groupid 分组id
      * @throws WeixinException 移动用户分组异常
      */
@@ -600,13 +586,11 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("updateMemberGroup返回json：" + jsonObj.toString());
-            }
+            log.debug("updateMemberGroup返回json:{}", jsonObj);
             //判断是否修改成功
             //正常时返回 {"errcode": 0, "errmsg": "ok"}
             //错误时返回 示例：{"errcode":40013,"errmsg":"invalid appid"}
-            int errcode = jsonObj.getInt("errcode");
+            int errcode = jsonObj.getIntValue("errcode");
             //登录成功，设置accessToken和过期时间
             if (errcode != 0) {
                 //返回异常信息
@@ -635,9 +619,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("createMenu返回json：" + jsonObj.toString());
-            }
+            log.debug("createMenu返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -648,7 +630,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 查询自定义菜单
-     *
+     * <p>
      * <p>
      * 最多支持创建2级自定义菜单</p>
      *
@@ -665,9 +647,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("getMenu返回json：" + jsonObj.toString());
-            }
+            log.debug("getMenu返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
@@ -695,9 +675,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("deleteMenu返回json：" + jsonObj.toString());
-            }
+            log.debug("deleteMenu返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -709,9 +687,9 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 创建二维码ticket
      *
-     * @param ticketType 二维码类型
-     * @param fileName 图片文件路径
-     * @param scene_id 场景值ID
+     * @param ticketType     二维码类型
+     * @param fileName       图片文件路径
+     * @param scene_id       场景值ID
      * @param expire_seconds 临时二维码过期时间
      * @throws WeixinException
      */
@@ -749,9 +727,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，返回结果
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("createQrcode返回json：" + jsonObj.toString());
-            }
+            log.debug("createQrcode返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -789,7 +765,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 根据OpenID列表群发文本消息
      *
-     * @param openIds 粉丝OpenId集合
+     * @param openIds    粉丝OpenId集合
      * @param txtContent 文本消息内容
      * @return 发送成功则返回群发消息Id，否则返回null
      * @throws org.weixin4j.WeixinException
@@ -807,9 +783,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("群发文本消息返回json：" + jsonObj.toString());
-            }
+            log.debug("群发文本消息返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -843,9 +817,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("群发图文消息返回json：" + jsonObj.toString());
-            }
+            log.debug("群发图文消息返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -874,9 +846,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("uploadnews返回json：" + jsonObj.toString());
-            }
+            log.debug("uploadnews返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -892,7 +862,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 发送客服文本消息
      *
-     * @param openId 粉丝OpenId
+     * @param openId     粉丝OpenId
      * @param txtContent 文本消息内容
      * @throws org.weixin4j.WeixinException
      */
@@ -911,7 +881,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     /**
      * 发送客服图文消息
      *
-     * @param openId 粉丝OpenId
+     * @param openId   粉丝OpenId
      * @param articles 图文消息，一个图文消息支持1到10条图文
      * @throws org.weixin4j.WeixinException
      */
@@ -931,7 +901,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
      * 新增临时素材
      *
      * @param mediaType 媒体文件类型，分别有图片（image）、语音（voice）、视频（video）和缩略图（thumb）
-     * @param file form-data中媒体文件标识，有filename、filelength、content-type等信息
+     * @param file      form-data中媒体文件标识，有filename、filelength、content-type等信息
      * @return 上传成功返回素材Id，否则返回null
      * @throws WeixinException
      */
@@ -940,11 +910,9 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         HttpsClient http = new HttpsClient();
         //上传素材，返回JSON数据包
         String jsonStr = http.uploadHttps("https://api.weixin.qq.com/cgi-bin/media/upload?access_token=" + this.oauthToken.getAccess_token() + "&type=" + mediaType.toString(), file);
-        JSONObject jsonObj = JSONObject.fromObject(jsonStr);
+        JSONObject jsonObj = JSONObject.parseObject(jsonStr);
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("上传多媒体文件返回json：" + jsonObj.toString());
-            }
+            log.debug("上传多媒体文件返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -976,7 +944,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
      * 上传媒体文件
      *
      * @param mediaType 媒体文件类型，分别有图片（image）、语音（voice）、视频（video）和缩略图（thumb）
-     * @param file form-data中媒体文件标识，有filename、filelength、content-type等信息
+     * @param file      form-data中媒体文件标识，有filename、filelength、content-type等信息
      * @return 上传成功返回素材Id，否则返回null
      * @throws WeixinException
      */
@@ -987,11 +955,9 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
             HttpClient http = new HttpClient();
             //上传素材，返回JSON数据包
             String jsonStr = http.upload("http://file.api.weixin.qq.com/cgi-bin/media/upload?access_token=" + this.oauthToken.getAccess_token() + "&type=" + mediaType, file);
-            JSONObject jsonObj = JSONObject.fromObject(jsonStr);
+            JSONObject jsonObj = JSONObject.parseObject(jsonStr);
             if (jsonObj != null) {
-                if (Configuration.isDebug()) {
-                    System.out.println("上传多媒体文件返回json：" + jsonObj.toString());
-                }
+                log.debug("上传多媒体文件返回json:", jsonObj);
                 Object errcode = jsonObj.get("errcode");
                 if (errcode != null && !errcode.toString().equals("0")) {
                     //返回异常信息
@@ -1056,9 +1022,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //成功返回如下JSON:
         //{"errcode":0,"errmsg":"ok","ticket":"bxLdikRXVbTPdHSM05e5u5sUoXNKd8-41ZO3MhKoyN5OfkWITDGgnr2fwJ0m9E8NYzWKVZvdVtaUgWvsdshFKA","expires_in":7200}
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("获取jsapi_ticket返回json：" + jsonObj.toString());
-            }
+            log.debug("获取jsapi_ticket返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
@@ -1091,15 +1055,13 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //成功返回如下JSON:
         //{"errcode":0,"errmsg":"ok","ticket":"bxLdikRXVbTPdHSM05e5u5sUoXNKd8-41ZO3MhKoyN5OfkWITDGgnr2fwJ0m9E8NYzWKVZvdVtaUgWvsdshFKA","expires_in":7200}
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("获取jsapi_ticket返回json：" + jsonObj.toString());
-            }
+            log.debug("获取jsapi_ticket返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             } else {
-                return new JsApiTicket(jsonObj.getString("ticket"), jsonObj.getInt("expires_in"));
+                return new JsApiTicket(jsonObj.getString("ticket"), jsonObj.getIntValue("expires_in"));
             }
         }
         return null;
@@ -1115,9 +1077,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
     public UnifiedOrderResult payUnifiedOrder(UnifiedOrder unifiedorder) throws WeixinException {
         //将统一下单对象转成XML
         String xmlPost = unifiedorder.toXML();
-        if (Configuration.isDebug()) {
-            System.out.println("调试模式_统一下单接口 提交XML数据：" + xmlPost);
-        }
+        log.debug("调试模式_统一下单接口 提交XML数据:{}", xmlPost);
         //创建请求对象
         HttpsClient http = new HttpsClient();
         //提交xml格式数据
@@ -1136,7 +1096,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 发送现金红包
-     *
+     * <p>
      * <p>
      * 使用weixin4j.properties的配置</p>
      *
@@ -1152,18 +1112,16 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
      * 发送现金红包
      *
      * @param sendRedPack 现金红包对象
-     * @param partnerId 商户ID
-     * @param certPath 证书路径
-     * @param certSecret 证书密钥
+     * @param partnerId   商户ID
+     * @param certPath    证书路径
+     * @param certSecret  证书密钥
      * @return 发送现金红包返回结果对象
      * @throws org.weixin4j.WeixinException
      */
     public SendRedPackResult sendRedPack(SendRedPack sendRedPack, String partnerId, String certPath, String certSecret) throws WeixinException {
         //将统一下单对象转成XML
         String xmlPost = sendRedPack.toXML();
-        if (Configuration.isDebug()) {
-            System.out.println("调试模式_发送现金红包接口 提交XML数据：" + xmlPost);
-        }
+        log.debug("调试模式_发送现金红包接口 提交XML数据:{}", xmlPost);
         //创建请求对象
         HttpsClient http = new HttpsClient();
         //提交xml格式数据
@@ -1191,7 +1149,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
      * @return 微信服务器IP地址列表
      * @throws org.weixin4j.WeixinException
      */
-    public List<String> getCallbackIp() throws WeixinException {
+    public List<Object> getCallbackIp() throws WeixinException {
         //必须先调用检查登录方法
         checkLogin();
         //创建请求对象
@@ -1203,9 +1161,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         //成功返回如下JSON:
         //{"ip_list":["127.0.0.1","127.0.0.1"]}
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("获取getCallbackIp返回json：" + jsonObj.toString());
-            }
+            log.debug("获取getCallbackIp返回json:", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息

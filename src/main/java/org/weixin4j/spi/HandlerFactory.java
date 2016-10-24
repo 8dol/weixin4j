@@ -1,5 +1,6 @@
 package org.weixin4j.spi;
 
+import lombok.extern.slf4j.Slf4j;
 import org.weixin4j.Configuration;
 
 /**
@@ -8,6 +9,7 @@ import org.weixin4j.Configuration;
  * @author qsyang
  * @version 1.0
  */
+@Slf4j
 public class HandlerFactory {
 
     private static IMessageHandler messageHandler = null;
@@ -18,9 +20,7 @@ public class HandlerFactory {
             try {
                 //获取
                 defaultHandler = Configuration.getProperty("weixin4j.handler", defaultHandler);
-                if (Configuration.isDebug()) {
-                    System.out.println("微信输入消息处理Hanler:" + defaultHandler);
-                }
+                log.debug("微信输入消息处理Hanler:{}", defaultHandler);
                 // 加载处理器
                 Class<?> clazz = Class.forName(defaultHandler);
                 try {
@@ -45,9 +45,7 @@ public class HandlerFactory {
             try {
                 //获取
                 defaultNormalHandler = Configuration.getProperty("weixin4j.message.handler.normal", defaultNormalHandler);
-                if (Configuration.isDebug()) {
-                    System.out.println("微信接受消息处理Hanler:" + defaultNormalHandler);
-                }
+                log.debug("微信接受消息处理Hanler:{}", defaultNormalHandler);
                 // 加载处理器
                 Class<?> clazz = Class.forName(defaultNormalHandler);
                 try {
@@ -72,9 +70,7 @@ public class HandlerFactory {
             try {
                 //获取
                 defaultEventHandler = Configuration.getProperty("weixin4j.message.handler.event", defaultEventHandler);
-                if (Configuration.isDebug()) {
-                    System.out.println("微信接受消息处理Hanler:" + defaultEventHandler);
-                }
+                log.debug("微信接受消息处理Hanler:{}", defaultEventHandler);
                 // 加载处理器
                 Class<?> clazz = Class.forName(defaultEventHandler);
                 try {

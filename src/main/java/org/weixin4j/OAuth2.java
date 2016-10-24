@@ -19,13 +19,15 @@
  */
 package org.weixin4j;
 
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.weixin4j.http.HttpsClient;
 import org.weixin4j.http.OAuth;
 import org.weixin4j.http.OAuth2Token;
 import org.weixin4j.http.Response;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import net.sf.json.JSONObject;
-import org.weixin4j.http.HttpsClient;
 
 /**
  * 网页授权获取用户基本信息
@@ -33,6 +35,7 @@ import org.weixin4j.http.HttpsClient;
  * @author weixin4j<weixin4j@ansitech.com>
  * @version 1.0
  */
+@Slf4j
 public class OAuth2 extends WeixinSupport implements java.io.Serializable {
 
     /**
@@ -70,7 +73,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 根据公众号获取网页授权AccessToken
-     *
+     * <p>
      * System property -Dweixin4j.oauth.appid and -Dweixin4j.oauth.secret
      * override this attribute.
      *
@@ -83,7 +86,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
      * @param code
      * @param expiresIn
      * @throws WeixinException when Weixin service or network is unavailable, or
-     * the user has not authorized
+     *                         the user has not authorized
      * @since Weixin 1.0.0
      */
     public void init(String accessToken, String appId, String secret, String scope, String refresh_token, String openid, String code, int expiresIn) throws WeixinException {
@@ -139,7 +142,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
     /**
      * 向微信平台发送获取access_token请求
      *
-     * @param appId 第三方用户唯一凭证
+     * @param appId  第三方用户唯一凭证
      * @param secret 第三方用户唯一凭证密钥，既appsecret
      * @param code
      * @return 用户凭证
@@ -153,8 +156,8 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
     /**
      * 向微信平台发送获取access_token请求
      *
-     * @param appId 第三方用户唯一凭证
-     * @param secret 第三方用户唯一凭证密钥，既appsecret
+     * @param appId     第三方用户唯一凭证
+     * @param secret    第三方用户唯一凭证密钥，既appsecret
      * @param code
      * @param grantType 获取access_token填写authorization_code
      * @return 用户凭证
@@ -187,9 +190,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("login返回json：" + jsonObj.toString());
-            }
+            log.debug("login返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
@@ -202,7 +203,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
                 //设置公众号信息
                 oauth = new OAuth(appId, secret);
                 //设置凭证
-                this.oauth2Token = (OAuth2Token) JSONObject.toBean(jsonObj, OAuth2Token.class);
+                this.oauth2Token = JSONObject.toJavaObject(jsonObj, OAuth2Token.class);
             }
         }
         return oauth2Token;
@@ -213,7 +214,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
      *
      * @return
      * @throws WeixinException when Weixin service or network is unavailable, or
-     * the user has not authorized
+     *                         the user has not authorized
      */
     public OAuth2Token refreshToken() throws WeixinException {
         //必须先调用检查登录方法
@@ -227,9 +228,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("login返回json：" + jsonObj.toString());
-            }
+            log.debug("login返回json:", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
@@ -240,7 +239,7 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
             //登录成功，设置accessToken和过期时间
             if (obj != null) {
                 //设置凭证
-                this.oauth2Token = (OAuth2Token) JSONObject.toBean(jsonObj, OAuth2Token.class);
+                this.oauth2Token = JSONObject.toJavaObject(jsonObj, OAuth2Token.class);
             }
         }
         return oauth2Token;
@@ -248,13 +247,13 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 获取用户对象
-     *
+     * <p>
      * <p>
      * 通过公众号，返回用户对象，进行用户相关操作</p>
      *
      * @return 用户对象
      * @throws WeixinException when Weixin service or network is unavailable, or
-     * the user has not authorized
+     *                         the user has not authorized
      */
     public OAuth2User getUserInfo() throws WeixinException {
         //默认简体中文
@@ -263,14 +262,14 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
 
     /**
      * 获取用户对象
-     *
+     * <p>
      * <p>
      * 通过公众号，返回用户对象，进行用户相关操作</p>
      *
      * @param lang 国家地区语言版本 zh_CN 简体，zh_TW 繁体，en 英语
      * @return 用户对象
      * @throws WeixinException when Weixin service or network is unavailable, or
-     * the user has not authorized
+     *                         the user has not authorized
      */
     public OAuth2User getUserInfo(String lang) throws WeixinException {
         //必须先调用检查登录方法
@@ -285,16 +284,14 @@ public class OAuth2 extends WeixinSupport implements java.io.Serializable {
         //根据请求结果判定，是否验证成功
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
-            if (Configuration.isDebug()) {
-                System.out.println("getUserInfo返回json：" + jsonObj.toString());
-            }
+            log.debug("getUserInfo返回json:", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             }
             //设置公众号信息
-            user = (OAuth2User) JSONObject.toBean(jsonObj, OAuth2User.class);
+            user = JSONObject.toJavaObject(jsonObj, OAuth2User.class);
         }
         return user;
     }
