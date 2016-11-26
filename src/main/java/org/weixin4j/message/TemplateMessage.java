@@ -62,16 +62,6 @@ public class TemplateMessage {
         key2DataMap.put(key, data);
     }
 
-    public void updateData(String key, String value, String color){
-        Data data = key2DataMap.get(key);
-        if(value != null){
-            data.value = value;
-        }
-        if(color != null){
-            data.color = color;
-        }
-    }
-
     public Map<String, Data> getData() {
         return key2DataMap;
     }
