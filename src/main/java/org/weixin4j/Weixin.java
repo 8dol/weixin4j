@@ -815,7 +815,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
                 throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
             } else {
                 //返回群发消息id
-                return jsonObj.getString("msg_id");
+                return jsonObj.getString("msgid");
             }
         }
         return null;
