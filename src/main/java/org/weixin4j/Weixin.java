@@ -22,19 +22,23 @@ package org.weixin4j;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.weixin4j.http.OAuth;
-import org.weixin4j.http.OAuthToken;
-import org.weixin4j.http.Response;
+import org.apache.commons.lang.StringUtils;
+import org.weixin4j.http.*;
 import org.weixin4j.message.Article;
 import org.weixin4j.message.Articles;
+import org.weixin4j.message.MediaType;
+import org.weixin4j.message.TemplateMessage;
+import org.weixin4j.pay.JsApiTicket;
+import org.weixin4j.pay.UnifiedOrder;
+import org.weixin4j.pay.UnifiedOrderResult;
+import org.weixin4j.pay.redpack.SendRedPack;
+import org.weixin4j.pay.redpack.SendRedPackResult;
 import org.weixin4j.ticket.TicketType;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -43,20 +47,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
-import org.apache.commons.lang.StringUtils;
-import org.weixin4j.http.Attachment;
-import org.weixin4j.http.HttpClient;
-import org.weixin4j.http.HttpsClient;
-import org.weixin4j.message.MediaType;
-import org.weixin4j.pay.JsApiTicket;
-import org.weixin4j.pay.UnifiedOrder;
-import org.weixin4j.pay.UnifiedOrderResult;
-import org.weixin4j.pay.redpack.SendRedPack;
-import org.weixin4j.pay.redpack.SendRedPackResult;
 
 /**
  * 微信平台基础支持对象
@@ -784,6 +774,41 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         JSONObject jsonObj = res.asJSONObject();
         if (jsonObj != null) {
             log.debug("群发文本消息返回json:{}", jsonObj);
+            Object errcode = jsonObj.get("errcode");
+            if (errcode != null && !errcode.toString().equals("0")) {
+                //返回异常信息
+                throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
+            } else {
+                //返回群发消息id
+                return jsonObj.getString("msg_id");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据OpenID发送模板消息
+     *
+     * @param openId
+     * @param templateMessage
+     * @return 发送成功则返回群发消息Id，否则返回null
+     * @throws org.weixin4j.WeixinException
+     */
+    public String sendTemplateMessage(String openId, TemplateMessage templateMessage) throws WeixinException {
+        JSONObject json = new JSONObject();
+        json.put("touser", openId);
+        json.put("template_id", templateMessage.getTemplateId());
+        json.put("url", templateMessage.getUrl());
+        json.put("data", templateMessage.getData());
+
+
+        //创建请求对象
+        HttpsClient http = new HttpsClient();
+        Response res = http.post("https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" + this.oauthToken.getAccess_token(), json);
+        //根据请求结果判定，是否验证成功
+        JSONObject jsonObj = res.asJSONObject();
+        if (jsonObj != null) {
+            log.debug("模板消息返回json:{}", jsonObj);
             Object errcode = jsonObj.get("errcode");
             if (errcode != null && !errcode.toString().equals("0")) {
                 //返回异常信息
