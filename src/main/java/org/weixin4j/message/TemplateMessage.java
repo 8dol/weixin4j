@@ -14,7 +14,17 @@ public class TemplateMessage {
 
     private String Url;
 
+    private String TopColor;
+
     private Map<String, Data> key2DataMap = new HashMap<>();
+
+    public String getTopColor() {
+        return TopColor;
+    }
+
+    public void setTopColor(String topColor) {
+        TopColor = topColor;
+    }
 
     class Data {
         private String value;
@@ -53,6 +63,8 @@ public class TemplateMessage {
     public void setUrl(String url) {
         Url = url;
     }
+
+
 
     public void addData(String key, String value, String color) {
         Data data = new Data();

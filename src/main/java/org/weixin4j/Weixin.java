@@ -799,6 +799,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
         json.put("touser", openId);
         json.put("template_id", templateMessage.getTemplateId());
         json.put("url", templateMessage.getUrl());
+        json.put("topcolor", templateMessage.getTopColor());
         json.put("data", templateMessage.getData());
 
 
