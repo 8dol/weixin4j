@@ -9,7 +9,7 @@
     <groupId>org.weixin4j</groupId>
     <artifactId>spring-boot-starter-weixin4j</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.7-8</version>
+    <version>0.0.7-9</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

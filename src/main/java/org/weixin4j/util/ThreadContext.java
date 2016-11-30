@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Slf4j
 public class ThreadContext {
-    private static int TRACE_TIMEOUT = Configuration.getIntProperty("weixin4j.trace.timeout", 3000);
+    private static int TRACE_TIMEOUT = Configuration.getIntProperty("weixin4j.trace.timeout", 2000);
 
     private List<String> timeRecordList = new ArrayList<>(8);
 
@@ -60,7 +60,7 @@ public class ThreadContext {
         long endTime = System.currentTimeMillis();
         long cost = endTime - beginTime;
         if (cost > TRACE_TIMEOUT) {
-            log.info("[Weixin4j:record]总耗时={}, 时间链={}, 请求报文={}, 响应报文={}", cost, timeRecordList, inXml, outXml);
+            log.info("[微信跟踪]总耗时={}, 时间链={}, 请求报文={}, 响应报文={}", cost, timeRecordList, inXml, outXml);
         }
     }
 }

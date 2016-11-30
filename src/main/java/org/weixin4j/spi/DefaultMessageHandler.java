@@ -51,7 +51,7 @@ public class DefaultMessageHandler implements IMessageHandler {
             log.debug("将指定节点下的xml节点数据转换为对象成功!");
             // 取得消息类型
             String msgType = inputMsg.getMsgType();
-            log.info("[Weixin4j:Invoke:{}]", msgType);
+            log.info("微信消息类型:{}", msgType);
             //获取普通消息处理工具类
             INormalMessageHandler normalMsgHandler = HandlerFactory.getNormalMessageHandler();
             if (msgType.equals(MsgType.Text.toString())) {
@@ -80,7 +80,7 @@ public class DefaultMessageHandler implements IMessageHandler {
                 String event = inputMsg.getEvent();
                 //获取消息处理工具类
                 IEventMessageHandler eventMsgHandler = HandlerFactory.getEventMessageHandler();
-                log.info("[Weixin4j-Invoke:{}:{}]", msgType, event);
+                log.info("微信事件类型:{}", event);
                 //自定义菜单事件
                 if (event.equals(EventType.Click.toString())) {
                     //点击菜单拉取消息时的事件推送
