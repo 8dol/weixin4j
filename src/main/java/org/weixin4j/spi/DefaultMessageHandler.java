@@ -44,10 +44,12 @@ public class DefaultMessageHandler implements IMessageHandler {
         OutputMessage outputMsg = null;
         try {
             JAXBContext context = JAXBContext.newInstance(InputMessage.class);
+            ThreadContext.get().addTimeRecord("结束转换节点1");
             Unmarshaller unmarshaller = context.createUnmarshaller();
+            ThreadContext.get().addTimeRecord("结束转换节点2");
             InputMessage inputMsg = (InputMessage) unmarshaller.unmarshal(new StringReader(inputXml));
 
-            ThreadContext.get().addTimeRecord("结束转换节点");
+            ThreadContext.get().addTimeRecord("结束转换节点3");
             log.debug("将指定节点下的xml节点数据转换为对象成功!");
             // 取得消息类型
             String msgType = inputMsg.getMsgType();
