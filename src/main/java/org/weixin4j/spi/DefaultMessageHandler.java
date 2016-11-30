@@ -1,23 +1,22 @@
 package org.weixin4j.spi;
 
 import lombok.extern.slf4j.Slf4j;
+import org.weixin4j.WeixinException;
+import org.weixin4j.message.EventType;
 import org.weixin4j.message.InputMessage;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Date;
+import org.weixin4j.message.MsgType;
+import org.weixin4j.message.OutputMessage;
+import org.weixin4j.util.ThreadContext;
+import org.weixin4j.util.XStreamFactory;
+
 import javax.servlet.ServletInputStream;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
-import org.weixin4j.Configuration;
-import org.weixin4j.WeixinException;
-import org.weixin4j.message.EventType;
-import org.weixin4j.message.MsgType;
-import org.weixin4j.message.OutputMessage;
-import org.weixin4j.util.XStreamFactory;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Date;
 
 /**
- *
- *
  * @author qsyang
  * @version 1.0
  */
@@ -27,8 +26,11 @@ public class DefaultMessageHandler implements IMessageHandler {
     @Override
     public String invoke(ServletInputStream inputStream) throws WeixinException {
         try {
+            ThreadContext.get().addTimeRecord("开始读流");
             //将输入流转换为字符串
             String xmlMsg = XStreamFactory.inputStream2String(inputStream);
+            ThreadContext.get().setInXml(xmlMsg);
+            ThreadContext.get().addTimeRecord("结束读流");
             log.debug("获取POST的消息:\n{}\n------------------------", xmlMsg);
             return this.invoke(xmlMsg);
         } catch (IOException ex) {
@@ -44,10 +46,12 @@ public class DefaultMessageHandler implements IMessageHandler {
             JAXBContext context = JAXBContext.newInstance(InputMessage.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
             InputMessage inputMsg = (InputMessage) unmarshaller.unmarshal(new StringReader(inputXml));
+
+            ThreadContext.get().addTimeRecord("结束转换节点");
             log.debug("将指定节点下的xml节点数据转换为对象成功!");
             // 取得消息类型
             String msgType = inputMsg.getMsgType();
-            log.debug("POST的消息类型:[{}]", msgType);
+            log.info("[Weixin4j:Invoke:{}]", msgType);
             //获取普通消息处理工具类
             INormalMessageHandler normalMsgHandler = HandlerFactory.getNormalMessageHandler();
             if (msgType.equals(MsgType.Text.toString())) {
@@ -76,6 +80,7 @@ public class DefaultMessageHandler implements IMessageHandler {
                 String event = inputMsg.getEvent();
                 //获取消息处理工具类
                 IEventMessageHandler eventMsgHandler = HandlerFactory.getEventMessageHandler();
+                log.info("[Weixin4j-Invoke:{}:{}]", msgType, event);
                 //自定义菜单事件
                 if (event.equals(EventType.Click.toString())) {
                     //点击菜单拉取消息时的事件推送
@@ -123,6 +128,8 @@ public class DefaultMessageHandler implements IMessageHandler {
                     outputMsg = eventMsgHandler.locationSelect(inputMsg.toLocationSelectEventMessage());
                 }
             }
+
+            ThreadContext.get().addTimeRecord("结束事件处理");
             if (outputMsg != null) {
                 //设置收件人消息
                 setOutputMsgInfo(outputMsg, inputMsg);
@@ -140,6 +147,7 @@ public class DefaultMessageHandler implements IMessageHandler {
             try {
                 // 把发送发送对象转换为xml输出
                 String xml = outputMsg.toXML();
+                ThreadContext.get().setOutXml(xml);
                 log.debug("POST输出消息:\n{}\n------------------------", xml);
                 return xml;
             } catch (Exception ex) {
