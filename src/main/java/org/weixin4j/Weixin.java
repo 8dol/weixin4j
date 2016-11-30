@@ -281,7 +281,7 @@ public class Weixin extends WeixinSupport implements java.io.Serializable {
             Object errcode = jsonObj.get("errcode");
             if (errcode != null) {
                 //返回异常信息
-                throw new WeixinException(getCause(Integer.parseInt(errcode.toString())));
+                throw new WeixinException(getCause(Integer.parseInt(errcode.toString())) + ".Token=" + this.oauthToken.getAccess_token());
             }
             //设置公众号信息
             return JSONObject.toJavaObject(jsonObj, User.class);
