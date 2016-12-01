@@ -1,17 +1,18 @@
 package org.weixin4j.spi;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.pool.KeyedObjectPool;
+import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.weixin4j.WeixinException;
 import org.weixin4j.message.EventType;
 import org.weixin4j.message.InputMessage;
 import org.weixin4j.message.MsgType;
 import org.weixin4j.message.OutputMessage;
+import org.weixin4j.pool.JaxbUnmarshallerFactory;
 import org.weixin4j.util.ThreadContext;
 import org.weixin4j.util.XStreamFactory;
 
 import javax.servlet.ServletInputStream;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
 import java.io.StringReader;
@@ -23,15 +24,7 @@ import java.util.Date;
  */
 @Slf4j
 public class DefaultMessageHandler implements IMessageHandler {
-    private static JAXBContext context;
-
-    static {
-        try {
-            context = JAXBContext.newInstance(InputMessage.class);
-        } catch (JAXBException e) {
-            log.error("创建JAXBContext失败", e);
-        }
-    }
+    private static KeyedObjectPool unmarPool = new GenericKeyedObjectPool(new JaxbUnmarshallerFactory());
 
 
     @Override
@@ -49,16 +42,36 @@ public class DefaultMessageHandler implements IMessageHandler {
         }
     }
 
+    private InputMessage convert(String inputXml) {
+        Unmarshaller unmarshaller = null;
+        InputMessage inputMsg = null;
+        try {
+            unmarshaller = (Unmarshaller) unmarPool.borrowObject(null);
+            ThreadContext.get().addTimeRecord("结束转换节点1");
+
+            inputMsg = (InputMessage) unmarshaller.unmarshal(new StringReader(inputXml));
+
+            ThreadContext.get().addTimeRecord("结束转换节点2");
+        } catch (Exception e) {
+            log.error("borrowObject error", e);
+        } finally {
+            try {
+                unmarPool.returnObject(null, unmarshaller);
+            } catch (Exception e) {
+                log.error("returnObject error", e);
+            }
+
+            return inputMsg;
+        }
+    }
+
     @Override
     public String invoke(String inputXml) throws WeixinException {
         //输出消息对象
         OutputMessage outputMsg = null;
         try {
-            Unmarshaller unmarshaller = context.createUnmarshaller();
-            ThreadContext.get().addTimeRecord("结束转换节点1");
-            InputMessage inputMsg = (InputMessage) unmarshaller.unmarshal(new StringReader(inputXml));
+            InputMessage inputMsg = convert(inputXml);
 
-            ThreadContext.get().addTimeRecord("结束转换节点2");
             log.debug("将指定节点下的xml节点数据转换为对象成功!");
             // 取得消息类型
             String msgType = inputMsg.getMsgType();

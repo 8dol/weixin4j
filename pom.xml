@@ -9,7 +9,7 @@
     <groupId>org.weixin4j</groupId>
     <artifactId>spring-boot-starter-weixin4j</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.7-11</version>
+    <version>0.0.7-12</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,6 +61,11 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-pool</groupId>
+            <artifactId>commons-pool</artifactId>
+            <version>1.5.4</version>
         </dependency>
     </dependencies>
     <build>
