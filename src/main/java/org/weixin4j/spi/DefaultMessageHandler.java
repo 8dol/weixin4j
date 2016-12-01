@@ -11,6 +11,7 @@ import org.weixin4j.util.XStreamFactory;
 
 import javax.servlet.ServletInputStream;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
 import java.io.StringReader;
@@ -22,6 +23,16 @@ import java.util.Date;
  */
 @Slf4j
 public class DefaultMessageHandler implements IMessageHandler {
+    private static JAXBContext context;
+
+    static {
+        try {
+            context = JAXBContext.newInstance(InputMessage.class);
+        } catch (JAXBException e) {
+            log.error("创建JAXBContext失败", e);
+        }
+    }
+
 
     @Override
     public String invoke(ServletInputStream inputStream) throws WeixinException {
@@ -43,13 +54,11 @@ public class DefaultMessageHandler implements IMessageHandler {
         //输出消息对象
         OutputMessage outputMsg = null;
         try {
-            JAXBContext context = JAXBContext.newInstance(InputMessage.class);
-            ThreadContext.get().addTimeRecord("结束转换节点1");
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            ThreadContext.get().addTimeRecord("结束转换节点2");
+            ThreadContext.get().addTimeRecord("结束转换节点1");
             InputMessage inputMsg = (InputMessage) unmarshaller.unmarshal(new StringReader(inputXml));
 
-            ThreadContext.get().addTimeRecord("结束转换节点3");
+            ThreadContext.get().addTimeRecord("结束转换节点2");
             log.debug("将指定节点下的xml节点数据转换为对象成功!");
             // 取得消息类型
             String msgType = inputMsg.getMsgType();
