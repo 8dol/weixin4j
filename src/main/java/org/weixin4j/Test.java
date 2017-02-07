@@ -70,7 +70,7 @@ public class Test {
                         convert(xml);
                         long cost = System.currentTimeMillis() - beginTime;
                         if (cost > 50) {
-//                            System.out.println("=====" + cost);
+                            System.out.println("=====" + cost);
                         }
                     }
 
